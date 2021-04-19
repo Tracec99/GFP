@@ -1,0 +1,56 @@
+---
+title: "Clustering"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(factoextra)
+```
+
+```{r}
+dat <- read_csv(here::here("data", "LendingClub_Data.csv"))
+```
+
+```{r}
+## filter out non-numeric data while keeping loan_status to be re-added
+dat_numeric <- dat %>%
+  select(which(sapply(., is.numeric)), loan_status) %>%
+  select(!c(id, member_id, policy_code, mths_since_last_delinq, mths_since_last_record)) %>%
+  drop_na() %>%
+  select(!loan_status)
+
+status_vec <- dat %>%
+  select(which(sapply(., is.numeric)), loan_status) %>%
+  select(!c(id, member_id, policy_code, mths_since_last_delinq, mths_since_last_record)) %>%
+  drop_na() %>%
+  select(loan_status)
+```
+
+```{r}
+## store kmeans object
+kdat <- kmeans(dat_numeric, 4)
+```
+
+```{r}
+## visualize kmeans output
+## bulk data is noticeably similar in variability
+fviz_cluster(kdat, data = dat_numeric, geom = "point")
+```
+
+```{r}
+## add status back in
+dat_clustered <- dat_numeric %>%
+  mutate(loan_status = status_vec$loan_status, cluster = kdat$cluster)
+```
+
+```{r}
+ggplot(dat_clustered, aes(x = cluster)) +
+  geom_bar()
+```
