@@ -1,0 +1,97 @@
+---
+title: "GFP_EDA_JDK"
+author: "Jack Kincannon"
+date: "4/6/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+data <- read_csv("LendingClub_Data.csv")
+head(data)
+```
+```{r}
+# data cleaning
+a <- as.numeric(factor(data$grade))
+b <- as.numeric(factor(data$term))
+c <- as.numeric(factor(data$emp_length))
+d <- as.numeric(factor(data$home_ownership))
+e <- as.numeric(factor(data$issue_d))
+f <- as.numeric(factor(data$purpose))
+g <- as.numeric(factor(data$loan_status))
+
+df1 <- data.frame(data$id, a, b, c, d, e, f) %>%
+  rename(id = data.id)
+#head(df2)
+
+df2 <- data %>%
+  right_join(df1, by = "id") %>%
+  dplyr::select(-mths_since_last_delinq, 
+                -mths_since_last_record,
+                -revol_util,
+                -out_prncp,
+                -out_prncp_inv,
+                -recoveries,
+                -collection_recovery_fee,
+                -collections_12_mths_ex_med,
+                -policy_code)
+```
+
+
+
+
+
+
+```{r}
+df3 <- df2 %>%
+  filter(loan_status == "Fully Paid") %>%
+  dplyr::select(where(is.numeric))
+
+
+res <- cor(df3, method = c("pearson", "kendall", "spearman"))
+round(res, 2)
+```
+
+
+```{r}
+df3 <- df2 %>%
+  filter(loan_status == "Default") %>%
+  dplyr::select(where(is.numeric))
+
+
+res <- cor(df3, method = c("pearson", "kendall", "spearman"))
+#round(res, 2)
+```
+
+
+```{r}
+df4 <- data %>%
+  dplyr::select(loan_status, grade) %>%
+  group_by(loan_status) %>%
+  filter(loan_status == c("Default", "Fully Paid"))
+
+df5 <- data %>%
+  dplyr::select(loan_status, grade) %>%
+  group_by(loan_status) %>%
+  filter(loan_status == "Default")
+
+ggplot(df4, aes(grade)) + geom_bar()
+ggplot(df5, aes(grade)) + geom_bar()
+
+counts <- table(df4$loan_status, df4$grade)
+barplot(counts, main="Test 1",
+  xlab="Loan Status", col=c("darkblue","red"),
+  legend = rownames(counts), beside=TRUE)
+
+df6 <- data %>%
+  dplyr::select(grade) %>%
+  filter(grade == "A")
+
+```
+
